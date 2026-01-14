@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telemetry Prototype</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <script src="https://cdn.plot.ly/plotly-3.0.0.min.js" charset="utf-8" defer></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="map"></div>
+    <div class="legend" id="speedLegend">
+        <strong>Summary</strong>
+        <div id="dynamicLegend"></div>
+    </div>
+    <div class="control-panel" id="controlPanel">
+        <button class="toggle-panel" id="togglePanel">&#9660; Hide</button>
+        <h3>Upload GeoJSON</h3>
+        <input type="file" id="trackInput" accept=".geojson, .gpx" style="display: none;">
+        <div id="drop-zone">Drag & Drop or Click to Upload</div>
+        <p id="fileName"></p>
+        <div id="loadingIndicator" style="display: none;">Processing...</div>
+        <button class="toggle-btn" id="toggleLayer">Toggle Track</button>
+        <button class="toggle-btn" id="showHideLayer">Show/Hide Track</button>
+        <button class="toggle-btn" id="toggleTheme">Toggle Theme</button>
+    </div>
+    <div class="chart-container" id="chartContainer">
+        <button id="toggleChart" class="toggle-btn">Toggle Chart</button>
+        <div id="elevationChart"></div>
+    </div>
+    <script src="js/map.js" defer></script>
+    <script src="js/track.js" defer></script>
+    <script src="js/utils.js" defer></script>
+    <script src="js/main.js" defer></script>
+</body>
+</html>
