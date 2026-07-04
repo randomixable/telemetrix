@@ -23,5 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-legacy/
-data/
+/legacy/
+/data/
