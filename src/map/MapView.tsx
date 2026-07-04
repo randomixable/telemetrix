@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import type { Feature, FeatureCollection, LineString, Point } from 'geojson'
 import type { StoredTrack, TelemetryDisplayMode, TrackPoint, TrackSector } from '../types/telemetry'
 import { getDisplayPoints } from '../telemetry/display/points'

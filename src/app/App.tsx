@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { proxy } from 'comlink'
 import { Activity, Bike, Cpu, Database, Flag, FolderOpen, Gauge, Radar, SlidersHorizontal } from 'lucide-react'
-import { MapView } from '../map/MapView'
 import { useAppStore } from '../state/useAppStore'
 import { processGpxTrack } from '../telemetry/pipeline/processTrack'
 import type { TrackProcessingProgress } from '../telemetry/pipeline/processTrack'
@@ -13,6 +12,8 @@ import { defaultMotorcycleProfile, defaultMotorcycleProfiles } from '../motorcyc
 import { buildDistanceSectors, sectorDistanceOptionsKm } from '../telemetry/analysis/sectors'
 import type { SectorDistanceKm } from '../telemetry/analysis/sectors'
 import type { StoredTrack, TelemetryDisplayMode, TrackPoint, TrackSector } from '../types/telemetry'
+
+const MapView = lazy(() => import('../map/MapView').then((module) => ({ default: module.MapView })))
 
 function formatDistance(distanceKm?: number) {
   return distanceKm === undefined ? 'n/a' : `${distanceKm.toFixed(1)} km`
@@ -1067,13 +1068,21 @@ function App() {
         </header>
 
         <div className="map-stage">
-          <MapView
-            track={activeTrack}
-            highlightedSector={highlightedSector}
-            displayMode={telemetryDisplayMode}
-            selectedPointId={selectedPointId}
-            onSelectPoint={setSelectedPointId}
-          />
+          <Suspense
+            fallback={
+              <div className="map-loading" aria-live="polite">
+                Loading map engine
+              </div>
+            }
+          >
+            <MapView
+              track={activeTrack}
+              highlightedSector={highlightedSector}
+              displayMode={telemetryDisplayMode}
+              selectedPointId={selectedPointId}
+              onSelectPoint={setSelectedPointId}
+            />
+          </Suspense>
         </div>
 
         <footer className="telemetry-dock">

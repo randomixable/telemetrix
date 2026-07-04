@@ -572,6 +572,21 @@ small {
   height: 100%;
 }
 
+.map-loading {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    #0c0f12;
+  background-size: 42px 42px;
+  color: #8bd3ff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .map-overlay {
   position: absolute;
   z-index: 1;
