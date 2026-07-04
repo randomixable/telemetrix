@@ -1,54 +1,94 @@
 # Telemetrix
 
-Telemetrix is a local-first telemetry reconstruction and analysis app for consumer-grade GPX tracks. The goal is to turn sparse phone GPS data into a cleaned, reconstructed, and confidence-aware riding telemetry workspace.
+**Version:** `0.2.0-alpha.0`
 
-The current React version is a migration from the original vanilla HTML/CSS/JS prototype. The legacy prototype is preserved in `legacy/` for reference while the new app is rebuilt around a typed telemetry pipeline.
+Telemetrix is a local-first telemetry reconstruction and analysis app for consumer-grade GPX tracks. It turns phone-recorded GPX data into a cleaned, reconstructed, and auditable motorcycle telemetry workspace.
 
-## Current State
+The short version:
 
-The app currently supports:
+> From phone GPX into confidence-aware motorcycle telemetry.
 
-- GPX-only import from the browser.
-- Local persistence with IndexedDB through Dexie.
-- Local track library that survives browser refreshes.
-- GPX parsing into typed track points.
-- Baseline derived metrics: distance, speed, cleaned top speed, sampling rate, duration, moving time, elevation range/gain, and max acceleration/braking G-force.
-- Legacy-compatible speed cleaning with MAD outlier detection, acceleration jump handling, stop thresholding, and moving-average smoothing.
-- Default Honda CB150R StreetFire 2017 profile used for physical speed, acceleration, braking, and plausible top-speed constraints.
-- Per-point raw speed, cleaned speed, anomaly flags, anomaly reasons, and speed cleaning audit reasons.
-- Quality Audit with sampling interval, time coverage, expected 1 Hz samples, missing seconds, gap count, longest gap, P95 interval, duplicate points, GPS jumps, raw max speed, cleaned max speed, and confidence labels.
-- Confidence Model v1 that separates route shape, speed, acceleration, and reconstruction reliability.
-- Separate Final Anomalies and Processing Adjustments so smoothing operations are not treated as final anomaly counts.
-- Distance v2 reconstruction at 5 Hz with monotone cumulative distance interpolation, estimated samples, confidence values, heading, windowed curvature, and estimated lateral G fields.
-- Physics-aware validation v1 for measured and reconstructed points, using the default motorcycle profile to flag implausible acceleration, braking, lateral G, plausible top speed, low confidence, and distance-derived speed mismatch.
-- Raw GPX, Cleaned, and Reconstructed 5 Hz display modes.
-- Bottom dock chart modes for speed, elevation, acceleration G, lateral G, and confidence over distance.
-- Distance sector analysis with 5, 10, 15, 20, and 25 km options.
-- Sector hover/focus highlighting on the map.
-- Pause and traffic-stop detection with map markers.
-- MapLibre rendering for the active GPX track with a speed-colored route, persistent route backbone, POI markers, anomaly markers, and speed legend.
-- Auto-fit map bounds for imported tracks.
-- Fixed full-viewport map cockpit UI where the page does not scroll and the left sidebar scrolls internally.
-- Unit tests for parsing, speed cleaning, motorcycle constraints, quality audit, stop detection, sectors, reconstruction, ride metrics, and G-force calculations.
+Telemetrix does not try to pretend that phone GPX is the same as data from racing GPS, IMU, or datalogger hardware. Instead, it keeps the workflow transparent: raw data, cleaned data, reconstructed data, physics checks, confidence scoring, and visible audit trails.
 
-Primary sample for development:
+## Version Meaning
+
+Telemetrix currently uses pre-1.0 versioning because the core product is still being shaped.
 
 ```txt
-legacy/data/samples/Tracker-Kopeng-20250310.gpx
+0.1.x          Vanilla HTML/CSS/JS legacy prototype
+0.2.0-alpha.0 React + TypeScript telemetry cockpit migration
+1.0.0          Future stable local-first GPX telemetry analyzer
 ```
 
-## Product Direction
+This repository is currently on the `0.2.0-alpha.0` line.
 
-Telemetrix is not just a GPX editor. The intended direction is:
+Why alpha:
+
+- The React app already has import, map, local storage, reconstruction, audits, sectors, charts, and worker processing.
+- The telemetry model is still being validated against the legacy prototype.
+- Advanced metrics such as reconstructed acceleration, braking, lateral G, and confidence scoring are still estimation-first and should remain auditable.
+
+## Current Product Direction
+
+Telemetrix is being built as:
 
 > A local-first telemetry reconstruction and analysis app for consumer-grade GPX, focused on cleaning, resampling, physical constraints, confidence scoring, and riding insight.
 
-Important distinction:
+Core principles:
 
-- GPX data is measured by the phone GPS sensor.
-- Distance and speed are derived from GPS samples.
-- Cleaned speed, acceleration, reconstructed 5 Hz streams, braking zones, cornering estimates, and lean estimates are estimated or experimental.
-- Advanced metrics should expose confidence rather than pretending to be hardware-grade telemetry.
+- Local-first: GPX files and processed tracks stay in the browser through IndexedDB.
+- GPX-only first: the app starts from common phone GPX exports.
+- Auditable: raw, cleaned, and reconstructed values should be inspectable.
+- Physics-aware: motorcycle constraints should guide validation, not silently fabricate certainty.
+- Confidence-aware: estimated telemetry should clearly show how trustworthy it is.
+
+## Legacy vs React
+
+The original Telemetrix prototype was a vanilla HTML/CSS/JS app. It proved the first idea: load GPX, process speed/elevation/time data, and show ride metrics.
+
+The React version is the active direction. It keeps the useful legacy logic, but rebuilds the app around typed data, a clearer telemetry pipeline, local persistence, map interaction, reconstruction, and worker processing.
+
+```txt
+Legacy prototype
+  - Vanilla HTML/CSS/JS
+  - Useful reference for ride metrics and post-processing behavior
+  - Best kept as the historical baseline
+
+React app
+  - Vite + React + TypeScript
+  - Local-first storage
+  - MapLibre cockpit UI
+  - Raw / cleaned / reconstructed display modes
+  - Motorcycle constraints and confidence audits
+  - Web Worker processing
+```
+
+For repository management, the intended branch layout is:
+
+```txt
+main    React app, used for active development and deployment
+legacy  Preserved vanilla prototype branch
+```
+
+## What Works Now
+
+- GPX-only import.
+- Browser-local persistence with IndexedDB.
+- Local track library that survives browser refreshes.
+- MapLibre track rendering with speed-colored route segments.
+- Slow speed is red, higher speed is blue.
+- Start, finish, top speed, pause, traffic stop, and anomaly markers.
+- Raw GPX, cleaned, and reconstructed display modes.
+- Legacy-compatible speed cleaning with MAD filtering, acceleration jump handling, stop thresholding, and moving average smoothing.
+- Default Honda CB150R StreetFire 2017 motorcycle constraints.
+- Distance v2 reconstruction at 5 Hz using monotone cumulative distance interpolation.
+- Physics validation for plausible speed, acceleration, braking, lateral G, low confidence, and distance-speed mismatch.
+- Top speed audit and point inspector.
+- Ride summary with total time, moving time, average speed, top speed, distance, elevation, start/finish time, and max acceleration/braking G.
+- Distance sectors with 5, 10, 15, 20, and 25 km options.
+- Bottom dock charts for metrics, speed, elevation, acceleration/braking G, lateral G, and confidence.
+- Worker-based GPX processing with progress updates.
+- Unit tests for parser, cleaning, reconstruction, sectors, stops, quality, physics, and ride metrics.
 
 ## Current Pipeline
 
@@ -57,26 +97,42 @@ GPX text
   -> parse GPX trackpoints
   -> derive distance and raw speed
   -> legacy-compatible speed cleaning
-  -> motorcycle physical constraints
-  -> physics-aware validation of measured telemetry
-  -> distance v2 5 Hz reconstruction
-  -> physics-aware validation of reconstructed telemetry
-  -> stop/pause detection
-  -> quality, anomaly, and time coverage audit
-  -> summary and sector analysis
+  -> apply motorcycle physical constraints
+  -> validate measured telemetry
+  -> reconstruct 5 Hz telemetry with distance v2
+  -> validate reconstructed telemetry
+  -> detect stops and pauses
+  -> build quality, anomaly, and time coverage audit
+  -> build summary and sector analysis
 ```
 
-Important implementation notes:
+Important interpretation notes:
 
-- `samplingHz` is based on median interval, not full data coverage.
-- `timeCoveragePercent` compares actual raw points with expected 1 Hz points across the track duration.
-- `Final Anomalies` are currently motorcycle/physics-level flags.
-- `physics-*` audit reasons are validation flags, not automatic speed mutations.
-- Synthetic reconstructed samples use source-anchor interval acceleration for charting instead of per-0.2s sample deltas, while acceleration and distance-speed mismatch hard flags are only applied to non-synthetic points to avoid repeated false positives.
-- Lateral G is estimated from smoothed/windowed route curvature and should be treated as a validation signal, not IMU-grade telemetry.
-- Confidence labels describe data reliability, not rider performance.
-- `Processing Adjustments` are cleaner operations such as smoothing, MAD filtering, and stop thresholding.
-- Existing tracks in IndexedDB may be stale after schema/pipeline changes; clear and re-import GPX files when checking new fields.
+- GPX position and timestamp are measured by the recording device.
+- Speed, acceleration, braking, lateral G, and reconstructed samples are derived or estimated.
+- Lateral G is based on route curvature, not an IMU.
+- Confidence labels describe data reliability, not rider skill.
+- `physics-*` reasons are validation flags, not always automatic speed mutations.
+- Existing browser-stored tracks can become stale after pipeline changes; clear the local library and re-import GPX when validating new telemetry fields.
+
+## Default Motorcycle Profile
+
+The default profile is the owner's motorcycle:
+
+```txt
+Honda CB150R StreetFire 2017
+Category: 150cc naked sport / street bike
+Wet weight: 136 kg
+Rider weight: 75 kg
+Estimated top speed: 125 km/h
+Max plausible speed: 135 km/h
+GPS spike threshold: 180 km/h
+Max acceleration: 0.55g
+Max braking: 1.00g
+Max corner lateral G: 0.75g
+```
+
+This profile is used as a practical constraint model for anomaly detection and reconstruction confidence.
 
 ## Tech Stack
 
@@ -86,10 +142,12 @@ Important implementation notes:
 - MapLibre GL JS
 - Dexie / IndexedDB
 - Zustand
-- ECharts, planned for charts
-- Comlink for Web Worker telemetry processing
+- Comlink + Web Worker
+- lucide-react
 - Vitest
 - Oxlint
+
+ECharts is installed for future chart work, but the current bottom dock chart is still an inline SVG implementation.
 
 ## Development
 
@@ -99,7 +157,7 @@ Install dependencies:
 npm install
 ```
 
-Run the dev server:
+Run locally:
 
 ```bash
 npm run dev
@@ -123,9 +181,17 @@ Test:
 npx vitest run
 ```
 
-## Deploy
+## Deployment
 
-The app is currently a static Vite SPA and can be deployed to Netlify, Vercel, Cloudflare Pages, or GitHub Pages.
+Telemetrix is currently a static Vite SPA, so Netlify is a good fit.
+
+Recommended Netlify settings:
+
+```txt
+Branch: main
+Build command: npm run build
+Publish directory: dist
+```
 
 For Netlify Drop:
 
@@ -139,14 +205,7 @@ Then upload:
 dist/
 ```
 
-For connected Netlify deploys:
-
-```txt
-Build command: npm run build
-Publish directory: dist
-```
-
-Existing Netlify URL:
+Existing deployment:
 
 ```txt
 https://randomixable-telemetrix.netlify.app/
@@ -156,97 +215,74 @@ https://randomixable-telemetrix.netlify.app/
 
 ```txt
 src/
-  app/                 React app shell
-  map/                 MapLibre map surface and future layers
-  telemetry/           Parsing, physics, cleaning, resampling, confidence
-  storage/             IndexedDB database and repositories
-  motorcycles/         Motorcycle profile domain model
-  state/               Client UI/app state
+  app/                 React app shell and cockpit UI
+  map/                 MapLibre track rendering and map interaction
+  telemetry/           Parsing, cleaning, reconstruction, physics, quality, analysis
+  storage/             IndexedDB database and track repository
+  motorcycles/         Motorcycle profile model and defaults
+  state/               Client app state
   types/               Shared telemetry types
 
-legacy/                Original vanilla prototype, scripts, docs, and samples
+public/                Static browser assets
+data/                  Local development GPX samples, not intended for production push
+legacy/                Local preserved prototype copy, if present
 ```
 
-## Development Roadmap
+## Roadmap
 
-### Phase 1: GPX Foundation
+### 0.2 Alpha: React Telemetry Cockpit
 
-Status: mostly done.
+Status: active.
 
-- Keep import GPX-only.
-- Rename import UI to `Import GPX`.
-- Add delete track.
-- Add clear local library.
-- Restore active track after refresh.
-- Improve invalid GPX error states.
+- Finish legacy metric parity checks.
+- Clarify raw vs cleaned vs reconstructed semantics in every UI surface.
+- Reduce inspector noise from repeated low-value anomaly points.
+- Add raw-clean conflict audit for cases where raw source speed and cleaned speed strongly disagree.
+- Add worker cancellation during import.
+- Improve chart interaction and map hover selection.
+- Keep README and changelog aligned with the actual pipeline.
 
-### Phase 2: Telemetry Core
+### 0.3 Alpha: Reconstruction and Confidence
 
-Status: in progress; core cleaning and audit foundation are active.
+Status: planned.
 
-- Separate raw points, cleaned points, and reconstructed points.
-- Add quality audit for sampling interval, time coverage, missing seconds, duplicate points, GPS jumps, and stationary drift.
-- Improve moving/stopped classification.
-- Add pause and stop detection.
-- Add top speed marker.
-- Add richer summary metrics.
-- Separate final anomalies from processing adjustments.
-- Add top speed audit and point inspector.
-
-### Phase 3: Cleaning and Reconstruction
-
-Status: distance v2 is now the default; physics-aware validation v1 is active, while physics-aware smoothing is still next.
-
-- Add speed spike filtering.
-- Add stationary drift filtering.
+- Refine distance v2 confidence scoring.
 - Add smoothing profiles.
-- Add estimated 5 Hz resampling.
-- Compare raw vs cleaned vs reconstructed streams.
-- Add confidence scoring per metric.
-- Use time gap audit to lower reconstruction confidence around sparse data.
-- Refine reconstruction v2 with better confidence rules and validation against physical constraints.
-- Promote validation findings into a clearer confidence model before destructive smoothing/clamping.
-- Later evaluate constrained cubic/PCHIP and Kalman/RTS smoothing.
+- Evaluate constrained cubic / PCHIP reconstruction for smoother visual telemetry.
+- Keep Kalman / RTS smoothing experimental until the current pipeline is better audited.
+- Improve top speed validity scoring.
 
-### Phase 4: Visualization
+### 0.4 Alpha: Motorcycle Database
 
-Status: map layers, sectors, chart lane, and inspector sync are active.
+Status: planned.
 
-- Color route by speed.
-- Add event markers for top speed, hard braking, stops, pauses, and GPS anomalies.
-- Add bottom chart for speed, elevation, acceleration G, lateral G, and confidence over distance.
-- Sync chart hover/cursor with map position.
-- Add point/segment inspector.
+- Add editable motorcycle profiles.
+- Store bike/rider parameters locally.
+- Use profile constraints in anomaly detection and reconstruction confidence.
+- Support comparing telemetry behavior across motorcycles.
 
-### Phase 5: Motorcycle Database
+### 0.5 Alpha: Analysis and Insight
 
-Status: default profile exists; editable database is pending.
+Status: planned.
 
-- Add motorcycle CRUD.
-- Store weight, rider weight, category, power, max acceleration, max braking, and max lean estimates.
-- Use motorcycle profile as physical constraints for anomaly detection and reconstruction.
+- Add braking zone detection.
+- Add corner entry/apex/exit heuristics where data quality allows it.
+- Add sector comparison.
+- Add export for cleaned and reconstructed telemetry.
 
-### Phase 6: Worker Architecture
+### 1.0: Stable Local GPX Telemetry Analyzer
 
-Status: worker v1 active for GPX import processing with step-based status updates; cancellation is pending.
+Status: future.
 
-- Move GPX parsing to a Web Worker.
-- Move cleaning, resampling, and quality audit to a Web Worker.
-- Add progress status during import and reconstruction.
-- Use Comlink for worker communication.
+- Stable import, analysis, visualization, and export workflow.
+- Clear confidence model for every derived metric.
+- Strong parity with legacy outputs where legacy semantics still make sense.
+- Reliable deployment from `main`.
 
-### Phase 7: Lab Mode
+## Known Limits
 
-Status: not started.
-
-- Add smoothing and reconstruction parameter controls.
-- Add algorithm versioning.
-- Add confidence breakdown.
-- Export reconstructed telemetry as CSV/JSON.
-- Compare outputs from different algorithms.
-
-## Notes
-
-- Large bundle warnings are expected at this stage because MapLibre and future charting libraries are large. Code splitting should be added once map/chart features stabilize.
-- Data is currently local-only. If the user clears browser site data, locally stored tracks will be removed.
-- Remote database, auth, and account sync are intentionally out of scope for the first local-first version.
+- Phone GPX is usually around 1 Hz and can contain gaps, jumps, pauses, and smoothing from the recording app.
+- Reconstructed 5 Hz telemetry is estimated, not measured.
+- Lateral G and acceleration are useful as validation and insight signals, but not as IMU-grade values.
+- MapLibre currently contributes a large build chunk; code splitting is planned later.
+- Local tracks are stored in browser IndexedDB and will be removed if site data is cleared.
